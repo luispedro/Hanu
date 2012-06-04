@@ -35,7 +35,9 @@ instance NumpyDtype Int where
     dtypeStr = (const "<i4")
 
 writeArray :: forall a t. (NumpyDtype a, T.Traversable t) => t a -> [Int] -> Put
-writeArray array shape = do
+writeArray array shape
+    |length shape >= 32 = error "Array dimension must be less than 32"
+    |otherwise = do
         writeMagicNr
         putWord16le $ convert (length header + padding)
         mapM_ (putWord8 . convert) header
