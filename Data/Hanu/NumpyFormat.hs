@@ -35,7 +35,11 @@ instance NumpyDtype Int where
     getValue = convert `fmap` getWord32le
     dtypeStr = (const "<i4")
 
-writeArray :: forall a t. (NumpyDtype a, T.Traversable t) => t a -> [Int] -> Put
+-- | writeArray outputs an array in numpy format
+writeArray :: forall a t. (NumpyDtype a, T.Traversable t)
+        => t a -- ^ array data
+        -> [Int] -- ^ shape information
+        -> Put
 writeArray array shape
     |length shape >= 32 = error "Array dimension must be less than 32"
     |otherwise = do
@@ -69,6 +73,7 @@ writeArray array shape
                 asPythonArray [a] = concat [show a, ",)"]
                 asPythonArray (a:as) = (concat [show a, ","]) ++ asPythonArray as
 
+-- | readArray parses a numpy formatted array into a Vector + shape information
 readArray :: forall a. NumpyDtype a => Get (V.Vector a, [Int])
 readArray = do
         _magic <- getMagicNr
@@ -76,8 +81,8 @@ readArray = do
         minor <- getWord8
         when (major /= 1 || minor /= 0)
             (error "Format version cannot be handled by this version of Hanu")
-        n <- getWord16le
-        h <- forM [1..n] (\_ -> convert `fmap` getWord8)
+        n <- convert `fmap` getWord16le
+        h <- replicateM n (convert `fmap` getWord8)
         case parseHeader h of
             Right shape -> do
                 arr <- V.replicateM (product shape) getValue
