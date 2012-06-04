@@ -21,6 +21,12 @@ case_read_write = v `veq` arr @? "read/write error"
         serialized = runPut $ writeArray arr [4,16]
         (v,sh) = (runGet readArray serialized) :: (V.Vector Double,[Int])
 
+case_read_write_int = v `veq` arr @? "read/write error"
+    where
+        arr = (V.fromList $ take 64 $ cycle [1,2,2,4,3,4,0,5]) :: V.Vector Int
+        serialized = runPut $ writeArray arr [4,16]
+        (v,sh) = (runGet readArray serialized) :: (V.Vector Int,[Int])
+
 veq a b = (V.length a == V.length b) &&
             (V.foldl (&&) True (V.zipWith (==) a b))
 

@@ -29,6 +29,11 @@ instance NumpyDtype Float where
     getValue = getFloat32le
     dtypeStr = (const "<f4")
 
+instance NumpyDtype Int where
+    writeValue = putWord32le . convert
+    getValue = convert `fmap` getWord32le
+    dtypeStr = (const "<i4")
+
 writeArray :: forall a t. (NumpyDtype a, T.Traversable t) => t a -> [Int] -> Put
 writeArray array shape = do
         writeMagicNr
