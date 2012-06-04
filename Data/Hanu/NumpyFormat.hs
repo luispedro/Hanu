@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, ConstraintKinds #-}
 module Data.Hanu.NumpyFormat
     ( readArray
     , writeArray
@@ -9,6 +9,7 @@ import Data.Binary.IEEE754
 import Data.Binary.Put
 import Data.Binary.Get
 import Data.Convertible
+import qualified Data.Traversable as T
 import Control.Applicative hiding (many)
 import Control.Monad
 import qualified Data.Vector as V
@@ -28,34 +29,31 @@ instance NumpyDtype Float where
     getValue = getFloat32le
     dtypeStr = (const "<f4")
 
-writeArray :: (NumpyDtype a) => V.Vector a -> [Int] -> Put
+writeArray :: forall a t. (NumpyDtype a, T.Traversable t) => t a -> [Int] -> Put
 writeArray array shape = do
-        let h = buildHeader (dtypeStr (array V.! 0))
-            pad = padding $ length h
         writeMagicNr
-        putWord16le $ convert (length h + pad)
-        mapM_ (putWord8 . convert) h
-        replicateM_ pad (putWord8 32)
-        V.mapM_ writeValue array
+        putWord16le $ convert (length header + padding)
+        mapM_ (putWord8 . convert) header
+        replicateM_ padding (putWord8 32)
+        void $ T.mapM writeValue array
     where
         writeMagicNr :: Put
         writeMagicNr = mapM_ (putWord8 . convert) "\x93NUMPY\1\0"
 
-        padding :: Int -> Int
-        padding n = if r == 0
+        padding :: Int
+        padding = if r == 0
                         then 0
                         else 16-r
             where
-                r = (10 + n) `rem` 16
-
-        buildHeader :: String -> String
-        buildHeader descr = concat
-                        ["{ 'descr': '"
-                        ,descr
-                        ,"', 'fortran_order': False, "
-                        ,"'shape': ("
-                        ,asPythonArray shape
-                        ,", }"]
+                r = (10 + length header) `rem` 16
+        header :: String
+        header = concat
+                    ["{ 'descr': '"
+                    ,dtypeStr (undefined :: a)
+                    ,"', 'fortran_order': False, "
+                    ,"'shape': ("
+                    ,asPythonArray shape
+                    ,", }"]
             where
                 asPythonArray [] = ""
                 asPythonArray [a] = concat [show a, ",)"]
@@ -64,8 +62,7 @@ writeArray array shape = do
 readArray :: forall a. NumpyDtype a => Get (V.Vector a, [Int])
 readArray = do
         _magic <- getMagicNr
-        _ <- getWord8
-        _ <- getWord8
+        skip 2
         n <- getWord16le
         h <- forM [1..n] (\_ -> convert `fmap` getWord8)
         let shape = parseHeader h
