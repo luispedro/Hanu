@@ -1,0 +1,42 @@
+Name: Hanu
+Version: 0.0.0.0.0
+Cabal-Version: >= 1.2
+Build-Type: Simple
+
+Author:Luis Pedro Coelho
+Copyright:(C) 2012 Luis Pedro Coelho
+License: MIT
+License-File:COPYING.MIT
+Maintainer:luis@luispedro.org
+
+Homepage:http://luispedro.org/software/hanu
+Synopsis:Haskell for Numerics
+Category:Scientific
+
+Tested-With: GHC==7.4.1
+
+Library
+    Build-Depends:
+                base
+                ,convertible
+                ,repa
+                ,vector
+    Exposed-modules:
+                Data.Hanu.Unary
+                Data.Hanu.Reduction
+    GHC-Options: -Wall -fwarn-tabs -O2 -fno-warn-missing-signatures
+
+
+Test-Suite test-NGH
+    Type: exitcode-stdio-1.0
+    Main-Is: TestSuite.hs
+    Build-Depends:
+                HUnit
+                ,QuickCheck
+                ,test-framework
+                ,test-framework-hunit
+                ,test-framework-quickcheck2
+                ,test-framework-th
+    Other-Modules:
+    GHC-Options: -Wall -fwarn-tabs -fno-warn-missing-signatures
+
