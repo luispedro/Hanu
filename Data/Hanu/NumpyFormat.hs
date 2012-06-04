@@ -10,6 +10,7 @@ import Data.Binary.Put
 import Data.Binary.Get
 import Data.Convertible
 import qualified Data.Traversable as T
+import qualified Data.Foldable as F
 import Control.Applicative hiding (many)
 import Control.Monad
 import qualified Data.Vector as V
@@ -42,7 +43,9 @@ writeArray array shape
         putWord16le $ convert (length header + padding)
         mapM_ (putWord8 . convert) header
         replicateM_ padding (putWord8 32)
-        void $ T.mapM writeValue array
+        written <- T.mapM writeValue array
+        when ((length $ F.toList written) /= product shape)
+            (error "Number of elements does not match")
     where
         writeMagicNr :: Put
         writeMagicNr = mapM_ (putWord8 . convert) "\x93NUMPY\1\0"
@@ -69,7 +72,10 @@ writeArray array shape
 readArray :: forall a. NumpyDtype a => Get (V.Vector a, [Int])
 readArray = do
         _magic <- getMagicNr
-        skip 2
+        major <- getWord8
+        minor <- getWord8
+        when (major /= 1 || minor /= 0)
+            (error "Format version cannot be handled by this version of Hanu")
         n <- getWord16le
         h <- forM [1..n] (\_ -> convert `fmap` getWord8)
         case parseHeader h of
