@@ -18,12 +18,17 @@ Tested-With: GHC==7.4.1
 Library
     Build-Depends:
                 base
+                ,binary
+                ,bytestring
                 ,convertible
+                ,data-binary-ieee754
+                ,parsec
                 ,repa
                 ,vector
     Exposed-modules:
                 Data.Hanu.Unary
                 Data.Hanu.Reduction
+                Data.Hanu.NumpyFormat
     GHC-Options: -Wall -fwarn-tabs -O2 -fno-warn-missing-signatures
 
 
@@ -38,5 +43,6 @@ Test-Suite test-NGH
                 ,test-framework-quickcheck2
                 ,test-framework-th
     Other-Modules:
+                Data.Hanu.Tests.NumpyFormat
     GHC-Options: -Wall -fwarn-tabs -fno-warn-missing-signatures
 
