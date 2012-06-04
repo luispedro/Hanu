@@ -70,16 +70,15 @@ readArray = do
         skip 2
         n <- getWord16le
         h <- forM [1..n] (\_ -> convert `fmap` getWord8)
-        let shape = parseHeader h
-        arr <- V.replicateM (product shape) getValue
-        return (arr,shape)
+        case parseHeader h of
+            Right shape -> do
+                arr <- V.replicateM (product shape) getValue
+                return (arr,shape)
+            Left err -> fail (show err)
     where
         getMagicNr :: Get [Word8]
         getMagicNr = replicateM 6 getWord8
-        parseHeader :: String -> [Int]
-        parseHeader h = case parse parser "internal" h of
-                            Right val -> val
-                            Left err -> error $ show err
+        parseHeader h = parse parser "internal" h
         parser = (string "{ 'descr': '")
                         *> (string $ dtypeStr (undefined :: a))
                         *> (string "', 'fortran_order': False, 'shape': (")
