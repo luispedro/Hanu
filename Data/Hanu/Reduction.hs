@@ -32,4 +32,6 @@ var arr = s2 R.-^ (mu **^ (sc shead 2))
 std :: (R.Shape sh, R.Repr r Double) => R.Array r (sh R.:. Int) Double -> R.Array R.D sh Double
 std = sqrt . var
 
+-- | sc wraps a scalar as a vector
 sc sh a = R.fromFunction sh (const a)
+
